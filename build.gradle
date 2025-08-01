@@ -1,0 +1,203 @@
+plugins {
+    id 'org.springframework.boot' version "3.4.5"
+    id 'io.spring.dependency-management' version "1.1.7"
+    id 'org.jetbrains.kotlin.jvm' version "2.0.10"
+    id "org.jetbrains.kotlin.plugin.spring" version "2.0.0"
+    id "com.gorylenko.gradle-git-properties" version "2.5.2"
+    id 'com.bmuschko.docker-remote-api' version "7.1.0"
+    id 'io.gitlab.arturbosch.detekt' version '1.23.7'
+    id 'org.jetbrains.kotlinx.kover' version '0.9.1'
+    id 'org.sonarqube' version '5.0.0.4638'
+}
+
+group = "com.expense.tracker"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://packages.confluent.io/maven/'
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'com.nimbusds:nimbus-jose-jwt'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+    implementation 'io.projectreactor.kotlin:reactor-kotlin-extensions'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.10.2"
+
+    implementation "io.github.microutils:kotlin-logging:3.0.5"
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.9'
+    implementation 'org.springdoc:springdoc-openapi-starter-common:2.8.9'
+
+    runtimeOnly 'net.logstash.logback:logstash-logback-encoder:8.1'
+    runtimeOnly "io.micrometer:micrometer-registry-statsd:1.15.2"
+    runtimeOnly "io.micrometer:micrometer-core:1.15.2"
+
+    implementation "io.github.resilience4j:resilience4j-kotlin:2.3.0"
+    implementation "io.github.resilience4j:resilience4j-retry:2.3.0"
+    implementation "io.github.resilience4j:resilience4j-circuitbreaker:2.3.0"
+    implementation "io.github.resilience4j:resilience4j-reactor:2.3.0"
+    implementation "io.github.resilience4j:resilience4j-micrometer:2.3.0"
+
+    // Reactive Database (R2DBC + PostgreSQL)
+    implementation("org.postgresql:r2dbc-postgresql:1.0.7.RELEASE")
+    implementation("io.r2dbc:r2dbc-pool:1.0.1.RELEASE")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
+
+    // Database Migration
+    implementation("org.flywaydb:flyway-core:9.22.3")
+    implementation("org.postgresql:postgresql:42.7.0")
+
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.mockk:mockk:1.14.5'
+    testImplementation 'org.testcontainers:localstack:1.21.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
+    testImplementation "de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x:4.21.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.12.0"
+
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperties(System.getProperties())
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+    }
+
+    finalizedBy koverXmlReport, koverHtmlReport
+}
+
+springBoot {
+    buildInfo()
+}
+
+detekt {
+    config = files(".detekt/config.yml")
+    buildUponDefaultConfig = true
+    basePath = projectDir
+}
+
+jar {
+    // disables plain jar, ensures only fat jar is created
+    enabled = false
+}
+
+// Docker Remote API Plugin Configuration
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+// Create Dockerfile task
+task createDockerfile(type: Dockerfile) {
+    destFile = project.file('build/docker/Dockerfile')
+    
+    // Multi-stage build
+    from('openjdk:21-jdk-alpine AS builder')
+    label(['authors': 'madhu.kommula'])
+    workingDir('/app')
+    
+    // Copy gradle files
+    copyFile('gradlew', '.')
+    copyFile('gradle', 'gradle')
+    copyFile('build.gradle', '.')
+    copyFile('settings.gradle', '.')
+    copyFile('gradle.properties', '.')
+    
+    runCommand('chmod +x ./gradlew')
+    copyFile('src', 'src')
+    runCommand('./gradlew clean bootJar -x test --no-daemon')
+    
+    // Runtime stage
+    from('openjdk:21-jre-alpine AS runtime')
+    runCommand('apk add --no-cache curl')
+    runCommand('addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup')
+    workingDir('/app')
+    
+    copyFile('--from=builder /app/build/libs/*.jar', 'app.jar')
+    runCommand('chown appuser:appgroup app.jar')
+    
+    user('appuser')
+    exposePort(8080)
+    
+    environmentVariable('JAVA_OPTS', '-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication')
+    entryPoint('sh', '-c', 'java $JAVA_OPTS -jar app.jar')
+    
+    // Health check
+    instruction('HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1')
+}
+
+// Build Docker image task
+task buildDockerImage(type: DockerBuildImage) {
+    dependsOn createDockerfile, bootJar
+    
+    inputDir = project.file('.')
+    dockerFile = createDockerfile.destFile
+    images.add("${project.group}/${project.name}:${project.version}")
+    images.add("${project.group}/${project.name}:latest")
+    
+    // Build arguments
+    buildArgs = [
+        'JAR_FILE': "build/libs/${project.name}-${project.version}.jar"
+    ]
+}
+
+// Push Docker image task (optional)
+task pushDockerImage(type: DockerPushImage) {
+    dependsOn buildDockerImage
+    images = buildDockerImage.images
+}
+
+sonarqube {
+    properties {
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${project.buildDir}/reports/kover/report.xml"
+        property 'sonar.coverage.exclusions', "p3-auth-service-app/src/main/kotlin/com/unzer/payment/authservice/infrastructure/config/**, p3-auth-service-app/src/main/kotlin/com/unzer/payment/authservice/infrastructure/context/**, p3-auth-service-app/src/main/kotlin/com/unzer/payment/authservice/infrastructure/web/**, p3-auth-service-app/src/main/kotlin/com/unzer/payment/authservice/infrastructure/resilience/**"
+    }
+}
+
+kover {
+    reports {
+        total {
+            filters {
+                excludes {
+                    annotatedBy(
+                            "com.unzer.payment.authservice.infrastructure.config.KoverIgnore"
+                    )
+                }
+            }
+            xml {
+                onCheck = false
+            }
+            html {
+                onCheck = false
+            }
+            verify {
+                onCheck = false
+            }
+        }
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+}

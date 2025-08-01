@@ -1,0 +1,60 @@
+# Build artifacts
+build/
+target/
+out/
+.gradle/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Docker files (don't need to copy these into the image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Test reports
+reports/
+test-results/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Node modules (if any)
+node_modules/
+
+# Environment files (security)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Coverage reports
+coverage/
+jacoco/
+
+# Local database files
+*.db
+*.sqlite
+
+# Backup files
+*.bak
+*.backup 

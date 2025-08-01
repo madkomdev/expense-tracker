@@ -1,0 +1,88 @@
+-- Users table
+users (
+    id: UUID PRIMARY KEY,
+    email: VARCHAR UNIQUE,
+    password_hash: VARCHAR,
+    first_name: VARCHAR,
+    last_name: VARCHAR,
+    created_at: TIMESTAMP,
+    updated_at: TIMESTAMP
+)
+
+-- Categories table
+categories (
+    id: UUID PRIMARY KEY,
+    user_id: UUID REFERENCES users(id),
+    name: VARCHAR,
+    color: VARCHAR,
+    icon: VARCHAR,
+    type: ENUM('EXPENSE', 'INCOME'),
+    created_at: TIMESTAMP
+)
+
+-- Transactions table
+transactions (
+    id: UUID PRIMARY KEY,
+    user_id: UUID REFERENCES users(id),
+    category_id: UUID REFERENCES categories(id),
+    amount: DECIMAL(12,2),
+    description: TEXT,
+    transaction_date: DATE,
+    type: ENUM('EXPENSE', 'INCOME'),
+    created_at: TIMESTAMP,
+    updated_at: TIMESTAMP
+)
+
+-- Budget table
+budgets (
+    id: UUID PRIMARY KEY,
+    user_id: UUID REFERENCES users(id),
+    category_id: UUID REFERENCES categories(id),
+    amount: DECIMAL(12,2),
+    period: ENUM('MONTHLY', 'WEEKLY', 'YEARLY'),
+    start_date: DATE,
+    end_date: DATE,
+    created_at: TIMESTAMP
+)
+
+
+Authentication:
+POST   /api/auth/register     - User registration
+POST   /api/auth/login        - User login
+POST   /api/auth/refresh      - Refresh JWT token
+POST   /api/auth/logout       - Logout user
+
+User Management:
+GET    /api/users/profile     - Get user profile
+PUT    /api/users/profile     - Update user profile
+DELETE /api/users/profile     - Delete user account
+
+Categories:
+GET    /api/categories        - List user categories
+POST   /api/categories        - Create category
+PUT    /api/categories/{id}   - Update category
+DELETE /api/categories/{id}   - Delete category
+
+Transactions:
+GET    /api/transactions                    - List transactions (paginated, filterable)
+POST   /api/transactions                    - Create transaction
+GET    /api/transactions/{id}              - Get transaction details
+PUT    /api/transactions/{id}              - Update transaction
+DELETE /api/transactions/{id}              - Delete transaction
+GET    /api/transactions/search            - Search transactions
+POST   /api/transactions/bulk              - Bulk import transactions
+
+Analytics & Reports:
+GET    /api/analytics/summary              - Monthly/yearly summary
+GET    /api/analytics/trends               - Spending trends over time
+GET    /api/analytics/categories           - Category-wise breakdown
+GET    /api/analytics/monthly-comparison   - Month-over-month comparison
+GET    /api/analytics/budget-vs-actual     - Budget vs actual spending
+GET    /api/analytics/export               - Export data (CSV/PDF)
+
+Budgets:
+GET    /api/budgets           - List budgets
+POST   /api/budgets           - Create budget
+PUT    /api/budgets/{id}      - Update budget
+DELETE /api/budgets/{id}      - Delete budget
+GET    /api/budgets/status    - Budget status overview

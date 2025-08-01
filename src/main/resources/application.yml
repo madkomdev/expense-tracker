@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: expense-tracker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/.well-known/jwks.json
+  server:
+    port: 9000
+  management:
+    server:
+      port: 9001
+    endpoints:
+      web:
+        exposure:
+          include: info, health, metrics
+    endpoint:
+      metrics:
+        enabled: ${DD_ENABLED:true}
+    statsd:
+      metrics:
+        export:
+          enabled: true
+          host: ${DD_AGENT_HOST:/var/run/datadog/dsd.socket}
+          protocol: ${DD_AGENT_PROTOCOL:uds_datagram}
+          max-packet-length: ${DD_AGENT_MAX_PACKET_LENGTH:8192}
+
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs
+
+info:
+  app:
+    name: Expense Tracker
+    description: Made with ❤️ by 🦄
+    java: ${java.specification.version}
