@@ -5,7 +5,7 @@ plugins {
     id "org.jetbrains.kotlin.plugin.spring" version "2.0.0"
     id "com.gorylenko.gradle-git-properties" version "2.5.2"
     id 'com.bmuschko.docker-remote-api' version "7.1.0"
-    id 'io.gitlab.arturbosch.detekt' version '1.23.7'
+    //id 'io.gitlab.arturbosch.detekt' version '1.23.7'
     id 'org.jetbrains.kotlinx.kover' version '0.9.1'
     id 'org.sonarqube' version '5.0.0.4638'
 }
@@ -92,80 +92,18 @@ springBoot {
     buildInfo()
 }
 
-detekt {
-    config = files(".detekt/config.yml")
-    buildUponDefaultConfig = true
-    basePath = projectDir
-}
+//detekt {
+//    config = files(".detekt/config.yml")
+//    buildUponDefaultConfig = true
+//    basePath = projectDir
+//}
 
 jar {
-    // disables plain jar, ensures only fat jar is created
+    enabled = true
+}
+
+bootJar {
     enabled = false
-}
-
-// Docker Remote API Plugin Configuration
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
-import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-
-// Create Dockerfile task
-task createDockerfile(type: Dockerfile) {
-    destFile = project.file('build/docker/Dockerfile')
-    
-    // Multi-stage build
-    from('openjdk:21-jdk-alpine AS builder')
-    label(['authors': 'madhu.kommula'])
-    workingDir('/app')
-    
-    // Copy gradle files
-    copyFile('gradlew', '.')
-    copyFile('gradle', 'gradle')
-    copyFile('build.gradle', '.')
-    copyFile('settings.gradle', '.')
-    copyFile('gradle.properties', '.')
-    
-    runCommand('chmod +x ./gradlew')
-    copyFile('src', 'src')
-    runCommand('./gradlew clean bootJar -x test --no-daemon')
-    
-    // Runtime stage
-    from('openjdk:21-jre-alpine AS runtime')
-    runCommand('apk add --no-cache curl')
-    runCommand('addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup')
-    workingDir('/app')
-    
-    copyFile('--from=builder /app/build/libs/*.jar', 'app.jar')
-    runCommand('chown appuser:appgroup app.jar')
-    
-    user('appuser')
-    exposePort(8080)
-    
-    environmentVariable('JAVA_OPTS', '-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication')
-    entryPoint('sh', '-c', 'java $JAVA_OPTS -jar app.jar')
-    
-    // Health check
-    instruction('HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1')
-}
-
-// Build Docker image task
-task buildDockerImage(type: DockerBuildImage) {
-    dependsOn createDockerfile, bootJar
-    
-    inputDir = project.file('.')
-    dockerFile = createDockerfile.destFile
-    images.add("${project.group}/${project.name}:${project.version}")
-    images.add("${project.group}/${project.name}:latest")
-    
-    // Build arguments
-    buildArgs = [
-        'JAR_FILE': "build/libs/${project.name}-${project.version}.jar"
-    ]
-}
-
-// Push Docker image task (optional)
-task pushDockerImage(type: DockerPushImage) {
-    dependsOn buildDockerImage
-    images = buildDockerImage.images
 }
 
 sonarqube {

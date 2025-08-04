@@ -1,14 +1,8 @@
--- Create basic tables for expense tracker application
--- Simple structure with essential columns and constraints only
-
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create enum types
 CREATE TYPE transaction_type AS ENUM ('EXPENSE', 'INCOME');
 CREATE TYPE budget_period AS ENUM ('WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY');
 
--- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -19,7 +13,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Categories table
 CREATE TABLE categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -43,7 +36,6 @@ CREATE TABLE transactions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Budgets table
 CREATE TABLE budgets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -57,7 +49,6 @@ CREATE TABLE budgets (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Basic indexes for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_categories_user_id ON categories(user_id);
 CREATE INDEX idx_transactions_user_id ON transactions(user_id);
@@ -65,8 +56,7 @@ CREATE INDEX idx_transactions_category_id ON transactions(category_id);
 CREATE INDEX idx_transactions_date ON transactions(transaction_date);
 CREATE INDEX idx_budgets_user_id ON budgets(user_id);
 
--- Basic constraints
-ALTER TABLE categories ADD CONSTRAINT uk_categories_user_name_type 
+ALTER TABLE categories ADD CONSTRAINT uk_categories_user_name_type
     UNIQUE (user_id, name, type);
 
 ALTER TABLE budgets ADD CONSTRAINT chk_budgets_date_range 
