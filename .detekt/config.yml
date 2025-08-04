@@ -1,0 +1,30 @@
+style:
+  MaxLineLength:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
+  WildcardImport:
+    active: false
+  ForbiddenComment:
+    active: false
+  MagicNumber:
+    active: false
+  UnusedPrivateMember:
+    active: false
+
+complexity:
+  CyclomaticComplexMethod:
+    excludes: []
+  ComplexCondition:
+    excludes: []
+  LongMethod:
+    active: false
+  LargeClass:
+    active: false
+  LongParameterList:
+    active: false
+
+naming:
+  MatchingDeclarationName:
+    excludes: []
+
