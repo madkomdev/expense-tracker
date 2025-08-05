@@ -6,32 +6,31 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:9000/.well-known/jwks.json
-  server:
-    port: 9000
-  management:
-    server:
-      port: 9001
-    endpoints:
-      web:
-        exposure:
-          include: info, health, metrics
-    endpoint:
-      metrics:
-        enabled: ${DD_ENABLED:true}
-    statsd:
-      metrics:
-        export:
-          enabled: true
-          host: ${DD_AGENT_HOST:/var/run/datadog/dsd.socket}
-          protocol: ${DD_AGENT_PROTOCOL:uds_datagram}
-          max-packet-length: ${DD_AGENT_MAX_PACKET_LENGTH:8192}
   r2dbc:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     pool:
       enabled: true
-
+server:
+  port: 9000
+management:
+  server:
+    port: 9001
+  endpoints:
+    web:
+      exposure:
+        include: info, health, metrics
+  endpoint:
+    metrics:
+      enabled: ${DD_ENABLED:true}
+  statsd:
+    metrics:
+      export:
+        enabled: true
+        host: ${DD_AGENT_HOST:/var/run/datadog/dsd.socket}
+        protocol: ${DD_AGENT_PROTOCOL:uds_datagram}
+        max-packet-length: ${DD_AGENT_MAX_PACKET_LENGTH:8192}
 
 springdoc:
   swagger-ui:
