@@ -1,5 +1,7 @@
-# Build artifacts
+# Build artifacts (exclude everything except the JAR files we need)
 build/
+!build/libs/
+!build/libs/*.jar
 target/
 out/
 .gradle/

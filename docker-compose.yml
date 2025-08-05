@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: expense-tracker-db
@@ -18,24 +17,23 @@ services:
       - ./docker/init-scripts:/docker-entrypoint-initdb.d
     networks:
       - expense-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U expense_user -d expense_tracker"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
-  # Expense Tracker Application
   expense-tracker:
-    image: com.expense.tracker/expense-tracker:1.0-SNAPSHOT
+    image: expense-tracker:1.0-SNAPSHOT
     container_name: expense-tracker-app
     restart: unless-stopped
     ports:
-      - "9000:9001"
+      - "9000:9000"
+      - "9001:9001"
     environment:
-      DATABASE_URL: r2dbc:postgresql://postgres:5432/expense_tracker
-      DATABASE__USERNAME: user
-      DATABASE__PASSWORD: password
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/expense_tracker
+      SPRING_R2DBC_USERNAME: user
+      SPRING_R2DBC_PASSWORD: password
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/expense_tracker
+      SPRING_FLYWAY_USER: user
+      SPRING_FLYWAY_PASSWORD: password
+      LOGGING_LEVEL_COM_EXPENSE: INFO
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +45,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-
 
 volumes:
   postgres_data:

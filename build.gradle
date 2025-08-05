@@ -99,11 +99,12 @@ springBoot {
 //}
 
 jar {
-    enabled = true
+    // disables plain jar, ensures only fat jar is created
+    enabled = false
 }
 
 bootJar {
-    enabled = false
+    enabled = true
 }
 
 sonarqube {
