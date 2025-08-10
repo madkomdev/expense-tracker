@@ -1,3 +1,4 @@
 DATABASE_URL: r2dbc:postgresql://localhost:5432/expense_tracker
 DATABASE_USERNAME: user
 DATABASE_PASSWORD: password
+FLYWAY_URL: jdbc:postgresql://localhost:5432/expense_tracker

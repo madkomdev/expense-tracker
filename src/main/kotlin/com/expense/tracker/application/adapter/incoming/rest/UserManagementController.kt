@@ -1,6 +1,7 @@
 package com.expense.tracker.application.adapter.incoming.rest
 
-import com.expense.tracker.application.adapter.incoming.rest.mappers.toUserProfile
+import com.expense.tracker.application.adapter.incoming.rest.model.ChangePasswordRequest
+import com.expense.tracker.application.adapter.incoming.rest.model.LoginRequest
 import com.expense.tracker.application.adapter.incoming.rest.model.User
 import com.expense.tracker.application.adapter.incoming.rest.model.UserProfile
 import com.expense.tracker.application.service.UserManagementService
@@ -19,51 +20,80 @@ import org.springframework.web.bind.annotation.RestController
 class UserManagementController( private val userManagementService: UserManagementService) {
 
     //User Management:
-    //GET    /api/users/profile     - Get user profile
-    //PUT    /api/users/profile     - Update user profile
-    //DELETE /api/users/profile     - Delete user account
+    //GET    /api/users                    - Get all users
+    //GET    /api/users/{id}/profile       - Get user profile
+    //POST   /api/users/register           - Register new user
+    //POST   /api/users/login              - Authenticate user
+    //PUT    /api/users/{id}/profile       - Update user profile
+    //PUT    /api/users/{id}/change-password - Change user password
+    //DELETE /api/users/{id}/delete        - Delete user account
 
     @PostMapping("/api/users/register")
     @ResponseStatus(HttpStatus.CREATED)
     suspend fun registerUser(@RequestBody user: User): ResponseEntity<UserProfile> {
-
-        val user = userManagementService.createUser(user)
-
-        return ResponseEntity.ok(user.toUserProfile())
+        val userProfile = userManagementService.createUser(user)
+        return ResponseEntity.ok(userProfile)
     }
 
-    @PutMapping("/api/users/{id}/profile")
+    @PostMapping("/api/users/login")
     @ResponseStatus(HttpStatus.OK)
-    suspend fun updateUserProfile(@PathVariable id : String, @RequestBody user: User): ResponseEntity<UserProfile> {
-
-        return ResponseEntity.ok(UserProfile(
-            id = id,
-            name = "${user.firstName} ${user.lastName}",
-            email = user.email,
-            phone = user.phone,
-            address = user.address
-        ))
+    suspend fun loginUser(@RequestBody loginRequest: LoginRequest): ResponseEntity<UserProfile> {
+        val userProfile = userManagementService.authenticateUser(loginRequest.username, loginRequest.password)
+        return if (userProfile != null) {
+            ResponseEntity.ok(userProfile)
+        } else {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
     }
 
-    @DeleteMapping("/api/users/{id}/delete")
+    @GetMapping("/api/users")
     @ResponseStatus(HttpStatus.OK)
-    suspend fun deleteUserAccount(@PathVariable id: String): ResponseEntity<String> {
-        // Logic to delete user account
-
-        return ResponseEntity.ok("User account deleted")
+    suspend fun getAllUsers(): ResponseEntity<List<UserProfile>> {
+        val userProfiles = userManagementService.getAllUsers()
+        return ResponseEntity.ok(userProfiles)
     }
 
     @GetMapping("/api/users/{id}/profile")
     @ResponseStatus(HttpStatus.OK)
     suspend fun getUserProfile(@PathVariable id: String): ResponseEntity<UserProfile> {
-        // Logic to get user profile
+        val userProfile = userManagementService.getUserById(id)
+        return if (userProfile != null) {
+            ResponseEntity.ok(userProfile)
+        } else {
+            ResponseEntity.notFound().build()
+        }
+    }
 
-        return ResponseEntity.ok(UserProfile(
-            id = id,
-            name = "", // This should be replaced with actual user data retrieval logic
-            email = "",
-            phone = "",
-            address = ""
-        ))
+    @PutMapping("/api/users/{id}/profile")
+    @ResponseStatus(HttpStatus.OK)
+    suspend fun updateUserProfile(@PathVariable id : String, @RequestBody user: User): ResponseEntity<UserProfile> {
+        val userProfile = userManagementService.updateUser(id, user)
+        return if (userProfile != null) {
+            ResponseEntity.ok(userProfile)
+        } else {
+            ResponseEntity.notFound().build()
+        }
+    }
+
+    @PutMapping("/api/users/{id}/change-password")
+    @ResponseStatus(HttpStatus.OK)
+    suspend fun changePassword(@PathVariable id: String, @RequestBody changePasswordRequest: ChangePasswordRequest): ResponseEntity<String> {
+        val success = userManagementService.changePassword(id, changePasswordRequest.currentPassword, changePasswordRequest.newPassword)
+        return if (success) {
+            ResponseEntity.ok("Password changed successfully")
+        } else {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to change password. Please check your current password.")
+        }
+    }
+
+    @DeleteMapping("/api/users/{id}/delete")
+    @ResponseStatus(HttpStatus.OK)
+    suspend fun deleteUserAccount(@PathVariable id: String): ResponseEntity<String> {
+        val deleted = userManagementService.deleteUser(id)
+        return if (deleted) {
+            ResponseEntity.ok("User account deleted successfully")
+        } else {
+            ResponseEntity.notFound().build()
+        }
     }
 }
