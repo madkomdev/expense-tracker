@@ -1,4 +1,4 @@
-package com.expense.tracker.application.domain.db
+package com.expense.tracker.domain.db
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
