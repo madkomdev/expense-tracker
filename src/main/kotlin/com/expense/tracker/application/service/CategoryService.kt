@@ -38,7 +38,7 @@ class CategoryService(
 
     suspend fun getCategoriesByType(type: String): List<CategoryResponse> {
         val transactionType = TransactionType.valueOf(type.uppercase())
-        return categoryRepository.findByTypeAndIsActiveTrueOrderBySortOrderAscNameAsc(transactionType)
+        return categoryRepository.findByTypeAndIsActiveTrueOrderBySortOrderAscNameAsc(transactionType.name)
             .toList()
             .map { it.toCategoryResponse() }
     }

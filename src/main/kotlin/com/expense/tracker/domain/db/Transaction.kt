@@ -17,7 +17,7 @@ data class Transaction @PersistenceCreator constructor(
     @Column("amount") val amount: BigDecimal,
     @Column("description") val description: String,
     @Column("transaction_date") val transactionDate: LocalDate,
-    @Column("type") val type: TransactionType,
+    @Column("type") val type: String,
     @Column("created_at") val createdAt: LocalDateTime? = null,
     @Column("updated_at") val updatedAt: LocalDateTime? = null
 ) {
@@ -28,6 +28,6 @@ data class Transaction @PersistenceCreator constructor(
         amount: BigDecimal,
         description: String,
         transactionDate: LocalDate = LocalDate.now(),
-        type: TransactionType
+        type: String
     ) : this(null, userId, categoryId, amount, description, transactionDate, type)
 } 

@@ -89,7 +89,7 @@ fun Transaction.toDBTransaction(userId: UUID) = DBTransaction(
     amount = this.amount,
     description = this.description,
     transactionDate = LocalDate.parse(this.transactionDate),
-    type = TransactionType.valueOf(this.type.uppercase())
+    type = TransactionType.valueOf(this.type.uppercase()).name
 )
 
 fun DBTransaction.toTransactionResponse(category: DBCategory) = TransactionResponse(
@@ -102,6 +102,6 @@ fun DBTransaction.toTransactionResponse(category: DBCategory) = TransactionRespo
     amount = this.amount,
     description = this.description,
     transactionDate = this.transactionDate.toString(),
-    type = this.type.name,
+    type = this.type,
     createdAt = this.createdAt?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) ?: ""
 )

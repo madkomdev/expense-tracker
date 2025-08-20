@@ -2,7 +2,7 @@ package com.expense.tracker.application.adapter.incoming.rest.mappers
 
 import com.expense.tracker.application.adapter.incoming.rest.model.User
 import com.expense.tracker.application.adapter.incoming.rest.model.UserProfile
-import com.expense.tracker.application.domain.db.User as DBUser
+import com.expense.tracker.domain.db.User as DBUser
 
 fun DBUser.toUserProfile() = UserProfile(
     id = this.id?.toString() ?: "unknown",

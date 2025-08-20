@@ -24,11 +24,16 @@ interface TransactionRepository: CoroutineCrudRepository<Transaction, String> {
         userId: UUID, 
         categoryId: UUID
     ): Flow<Transaction>
-    
-    // Find by user and type
+
+    @Query("""
+        SELECT * FROM transactions 
+        WHERE user_id = :userId
+        and type = CAST(:type AS transaction_type)
+        ORDER BY sort_order ASC, name ASC
+    """)
     fun findByUserIdAndTypeOrderByTransactionDateDescCreatedAtDesc(
         userId: UUID, 
-        type: TransactionType
+        type: String
     ): Flow<Transaction>
     
     // Find by user and date range

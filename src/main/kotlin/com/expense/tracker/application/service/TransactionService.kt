@@ -68,7 +68,7 @@ class TransactionService(
 
     suspend fun getTransactionsByType(userId: UUID, type: String): List<TransactionResponse> {
         val transactionType = TransactionType.valueOf(type.uppercase())
-        return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDescCreatedAtDesc(userId, transactionType)
+        return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDescCreatedAtDesc(userId, transactionType.name)
             .toList()
             .map { transaction ->
                 val category = categoryRepository.findById(transaction.categoryId.toString())!!
@@ -169,7 +169,7 @@ class TransactionService(
             amount = updateRequest.amount ?: existingTransaction.amount,
             description = updateRequest.description ?: existingTransaction.description,
             transactionDate = updateRequest.transactionDate?.let { LocalDate.parse(it) } ?: existingTransaction.transactionDate,
-            type = updateRequest.type?.let { TransactionType.valueOf(it.uppercase()) } ?: existingTransaction.type
+            type = updateRequest.type?.let { TransactionType.valueOf(it.uppercase()).name } ?: existingTransaction.type
         )
         
         val savedTransaction = transactionRepository.save(updatedTransaction)
