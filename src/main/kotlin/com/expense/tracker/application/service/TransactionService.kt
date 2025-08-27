@@ -5,7 +5,7 @@ import com.expense.tracker.application.adapter.outgoing.db.CategoryRepository
 import com.expense.tracker.application.adapter.outgoing.db.TransactionRepository
 import com.expense.tracker.application.service.mappers.toDBTransaction
 import com.expense.tracker.application.service.mappers.toTransactionResponse
-import com.expense.tracker.domain.db.TransactionType
+
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -22,11 +22,7 @@ class TransactionService(
         // Validate category exists
         val category = categoryRepository.findById(transaction.categoryId)
             ?: throw IllegalArgumentException("Category not found")
-        
-        // Validate type matches category type
-        if (category.type.name != transaction.type) {
-            throw IllegalArgumentException("Transaction type must match category type")
-        }
+
         
         val newTransaction = transaction.toDBTransaction(userId)
         val savedTransaction = transactionRepository.save(newTransaction)
@@ -67,8 +63,7 @@ class TransactionService(
     }
 
     suspend fun getTransactionsByType(userId: UUID, type: String): List<TransactionResponse> {
-        val transactionType = TransactionType.valueOf(type.uppercase())
-        return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDescCreatedAtDesc(userId, transactionType.name)
+        return transactionRepository.findByUserIdAndCategoryTypeOrderByTransactionDateDescCreatedAtDesc(userId, type.uppercase())
             .toList()
             .map { transaction ->
                 val category = categoryRepository.findById(transaction.categoryId.toString())!!
@@ -105,7 +100,7 @@ class TransactionService(
 
     suspend fun searchTransactions(userId: UUID, searchRequest: TransactionSearchRequest): List<TransactionResponse> {
         val categoryId = searchRequest.categoryId?.let { UUID.fromString(it) }
-        val type = searchRequest.type?.let { TransactionType.valueOf(it.uppercase()) }
+        val type = searchRequest.type?.uppercase()
         val startDate = searchRequest.startDate?.let { LocalDate.parse(it) }
         val endDate = searchRequest.endDate?.let { LocalDate.parse(it) }
         
@@ -129,10 +124,10 @@ class TransactionService(
     }
 
     suspend fun getTransactionSummary(userId: UUID): TransactionSummary {
-        val totalExpenses = transactionRepository.sumAmountByUserIdAndType(userId, TransactionType.EXPENSE) ?: BigDecimal.ZERO
-        val totalIncome = transactionRepository.sumAmountByUserIdAndType(userId, TransactionType.INCOME) ?: BigDecimal.ZERO
-        val expenseCount = transactionRepository.countByUserIdAndType(userId, TransactionType.EXPENSE)
-        val incomeCount = transactionRepository.countByUserIdAndType(userId, TransactionType.INCOME)
+        val totalExpenses = transactionRepository.sumAmountByUserIdAndCategoryType(userId, "EXPENSE") ?: BigDecimal.ZERO
+        val totalIncome = transactionRepository.sumAmountByUserIdAndCategoryType(userId, "INCOME") ?: BigDecimal.ZERO
+        val expenseCount = transactionRepository.countByUserIdAndCategoryType(userId, "EXPENSE")
+        val incomeCount = transactionRepository.countByUserIdAndCategoryType(userId, "INCOME")
         
         // TODO: Implement category breakdown query
         val categoryBreakdown = emptyList<CategorySummary>()
@@ -168,8 +163,7 @@ class TransactionService(
             categoryId = updateRequest.categoryId?.let { UUID.fromString(it) } ?: existingTransaction.categoryId,
             amount = updateRequest.amount ?: existingTransaction.amount,
             description = updateRequest.description ?: existingTransaction.description,
-            transactionDate = updateRequest.transactionDate?.let { LocalDate.parse(it) } ?: existingTransaction.transactionDate,
-            type = updateRequest.type?.let { TransactionType.valueOf(it.uppercase()).name } ?: existingTransaction.type
+            transactionDate = updateRequest.transactionDate?.let { LocalDate.parse(it) } ?: existingTransaction.transactionDate
         )
         
         val savedTransaction = transactionRepository.save(updatedTransaction)

@@ -1,8 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE transaction_type AS ENUM ('EXPENSE', 'INCOME');
-CREATE TYPE budget_period AS ENUM ('WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY');
-
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -22,7 +19,7 @@ CREATE TABLE categories (
     name VARCHAR(100) NOT NULL,
     color VARCHAR(7) NOT NULL DEFAULT '#6B7280',
     icon VARCHAR(50) DEFAULT 'folder',
-    type transaction_type NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('EXPENSE', 'INCOME')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -34,7 +31,7 @@ CREATE TABLE transactions (
     amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
     description TEXT NOT NULL,
     transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    type transaction_type NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('EXPENSE', 'INCOME')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -45,7 +42,7 @@ CREATE TABLE budgets (
     category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
-    period budget_period NOT NULL,
+    period VARCHAR(20) NOT NULL CHECK (period IN ('WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY')),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

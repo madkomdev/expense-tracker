@@ -39,5 +39,4 @@ FROM transactions t
 JOIN categories c ON t.category_id = c.id
 GROUP BY t.user_id, t.category_id, c.name, c.color, c.icon, t.type;
 
-CREATE CAST (varchar AS transaction_type) WITH INOUT AS IMPLICIT;
-CREATE CAST (text AS transaction_type) WITH INOUT AS IMPLICIT;
+-- Cast functions removed - no longer needed since we use strings instead of enums

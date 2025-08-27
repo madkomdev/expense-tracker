@@ -13,7 +13,7 @@ data class Category @PersistenceCreator constructor(
     @Column("name") val name: String,
     @Column("color") val color: String,
     @Column("icon") val icon: String,
-    @Column("type") val type: TransactionType,
+    @Column("type") val type: String,
     @Column("is_active") val isActive: Boolean = true,
     @Column("sort_order") val sortOrder: Int = 0,
     @Column("created_at") val createdAt: LocalDateTime? = null,
@@ -24,12 +24,8 @@ data class Category @PersistenceCreator constructor(
         name: String,
         color: String = "#6B7280",
         icon: String = "folder",
-        type: TransactionType,
+        type: String,
         isActive: Boolean = true,
         sortOrder: Int = 0
     ) : this(null, name, color, icon, type, isActive, sortOrder)
 }
-
-enum class TransactionType {
-    EXPENSE, INCOME
-} 

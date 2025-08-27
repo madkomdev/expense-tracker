@@ -6,10 +6,11 @@ import com.expense.tracker.application.adapter.incoming.rest.model.Category
 import com.expense.tracker.application.adapter.incoming.rest.model.CategoryResponse
 import com.expense.tracker.application.adapter.incoming.rest.model.Transaction
 import com.expense.tracker.application.adapter.incoming.rest.model.TransactionResponse
+import com.expense.tracker.domain.model.CategoryType
 import com.expense.tracker.domain.db.User as DBUser
 import com.expense.tracker.domain.db.Category as DBCategory
 import com.expense.tracker.domain.db.Transaction as DBTransaction
-import com.expense.tracker.domain.db.TransactionType
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -66,7 +67,7 @@ fun Category.toDBCategory() = DBCategory(
     name = this.name,
     color = this.color,
     icon = this.icon,
-    type = TransactionType.valueOf(this.type.uppercase()),
+    type = CategoryType.fromString(this.type).name,
     isActive = this.isActive,
     sortOrder = this.sortOrder
 )
@@ -76,20 +77,19 @@ fun DBCategory.toCategoryResponse() = CategoryResponse(
     name = this.name,
     color = this.color,
     icon = this.icon,
-    type = this.type.name,
+    type = CategoryType.fromString(this.type).name,
     isActive = this.isActive,
     sortOrder = this.sortOrder,
     createdAt = this.createdAt?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) ?: ""
 )
 
-// Transaction Mappers
+// Transaction Mappers  
 fun Transaction.toDBTransaction(userId: UUID) = DBTransaction(
     userId = userId,
     categoryId = UUID.fromString(this.categoryId),
     amount = this.amount,
     description = this.description,
-    transactionDate = LocalDate.parse(this.transactionDate),
-    type = TransactionType.valueOf(this.type.uppercase()).name
+    transactionDate = LocalDate.parse(this.transactionDate)
 )
 
 fun DBTransaction.toTransactionResponse(category: DBCategory) = TransactionResponse(
@@ -102,6 +102,6 @@ fun DBTransaction.toTransactionResponse(category: DBCategory) = TransactionRespo
     amount = this.amount,
     description = this.description,
     transactionDate = this.transactionDate.toString(),
-    type = this.type,
+    type = category.type, // Type is now inferred from the category
     createdAt = this.createdAt?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) ?: ""
 )

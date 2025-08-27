@@ -6,6 +6,5 @@ data class Transaction(
     val categoryId: String,
     val amount: BigDecimal,
     val description: String,
-    val transactionDate: String, // Format: "YYYY-MM-DD"
-    val type: String // "EXPENSE" or "INCOME"
+    val transactionDate: String // Format: "YYYY-MM-DD"
 ) 

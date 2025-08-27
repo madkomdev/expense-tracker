@@ -6,7 +6,8 @@ import com.expense.tracker.application.adapter.incoming.rest.model.CategoryUpdat
 import com.expense.tracker.application.adapter.outgoing.db.CategoryRepository
 import com.expense.tracker.application.service.mappers.toDBCategory
 import com.expense.tracker.application.service.mappers.toCategoryResponse
-import com.expense.tracker.domain.db.TransactionType
+import com.expense.tracker.domain.model.CategoryType
+
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 
@@ -37,8 +38,8 @@ class CategoryService(
     }
 
     suspend fun getCategoriesByType(type: String): List<CategoryResponse> {
-        val transactionType = TransactionType.valueOf(type.uppercase())
-        return categoryRepository.findByTypeAndIsActiveTrueOrderBySortOrderAscNameAsc(transactionType.name)
+        val transactionType = CategoryType.fromString(type).name
+        return categoryRepository.findByTypeAndIsActiveTrueOrderBySortOrderAscNameAsc(transactionType)
             .toList()
             .map { it.toCategoryResponse() }
     }

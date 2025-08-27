@@ -1,7 +1,7 @@
 package com.expense.tracker.application.adapter.outgoing.db
 
 import com.expense.tracker.domain.db.Transaction
-import com.expense.tracker.domain.db.TransactionType
+
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.repository.Query
@@ -26,12 +26,13 @@ interface TransactionRepository: CoroutineCrudRepository<Transaction, String> {
     ): Flow<Transaction>
 
     @Query("""
-        SELECT * FROM transactions 
-        WHERE user_id = :userId
-        and type = CAST(:type AS transaction_type)
-        ORDER BY sort_order ASC, name ASC
+        SELECT t.* FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = :userId
+        AND c.type = :type
+        ORDER BY t.transaction_date DESC, t.created_at DESC
     """)
-    fun findByUserIdAndTypeOrderByTransactionDateDescCreatedAtDesc(
+    fun findByUserIdAndCategoryTypeOrderByTransactionDateDescCreatedAtDesc(
         userId: UUID, 
         type: String
     ): Flow<Transaction>
@@ -46,38 +47,41 @@ interface TransactionRepository: CoroutineCrudRepository<Transaction, String> {
     // Recent transactions
     fun findTop10ByUserIdOrderByCreatedAtDesc(userId: UUID): Flow<Transaction>
     
-    // Summary queries
+    // Summary queries using category type
     @Query("""
-        SELECT SUM(amount) 
-        FROM transactions 
-        WHERE user_id = :userId AND type = :type
+        SELECT SUM(t.amount) 
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = :userId AND c.type = :type
     """)
-    suspend fun sumAmountByUserIdAndType(userId: UUID, type: TransactionType): BigDecimal?
+    suspend fun sumAmountByUserIdAndCategoryType(userId: UUID, type: String): BigDecimal?
     
     @Query("""
         SELECT COUNT(*) 
-        FROM transactions 
-        WHERE user_id = :userId AND type = :type
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = :userId AND c.type = :type
     """)
-    suspend fun countByUserIdAndType(userId: UUID, type: TransactionType): Long
+    suspend fun countByUserIdAndCategoryType(userId: UUID, type: String): Long
     
-    // Complex search query
+    // Complex search query using category type
     @Query("""
-        SELECT * FROM transactions 
-        WHERE user_id = :userId
-        AND (:categoryId IS NULL OR category_id = :categoryId)
-        AND (:type IS NULL OR type = :type)
-        AND (:description IS NULL OR LOWER(description) LIKE LOWER(CONCAT('%', :description, '%')))
-        AND (:minAmount IS NULL OR amount >= :minAmount)
-        AND (:maxAmount IS NULL OR amount <= :maxAmount)
-        AND (:startDate IS NULL OR transaction_date >= :startDate)
-        AND (:endDate IS NULL OR transaction_date <= :endDate)
-        ORDER BY transaction_date DESC, created_at DESC
+        SELECT t.* FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = :userId
+        AND (:categoryId IS NULL OR t.category_id = :categoryId)
+        AND (:type IS NULL OR c.type = :type)
+        AND (:description IS NULL OR LOWER(t.description) LIKE LOWER(CONCAT('%', :description, '%')))
+        AND (:minAmount IS NULL OR t.amount >= :minAmount)
+        AND (:maxAmount IS NULL OR t.amount <= :maxAmount)
+        AND (:startDate IS NULL OR t.transaction_date >= :startDate)
+        AND (:endDate IS NULL OR t.transaction_date <= :endDate)
+        ORDER BY t.transaction_date DESC, t.created_at DESC
     """)
     fun searchTransactions(
         userId: UUID,
         categoryId: UUID?,
-        type: TransactionType?,
+        type: String?,
         description: String?,
         minAmount: BigDecimal?,
         maxAmount: BigDecimal?,
