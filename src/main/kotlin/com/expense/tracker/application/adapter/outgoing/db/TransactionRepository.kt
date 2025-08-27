@@ -91,4 +91,20 @@ interface TransactionRepository: CoroutineCrudRepository<Transaction, String> {
     
     // Check if user owns transaction
     suspend fun existsByIdAndUserId(id: String, userId: UUID): Boolean
+    
+    // Budget-related query to calculate spent amount
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0) FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = :userId
+        AND (:categoryId IS NULL OR t.category_id = :categoryId)
+        AND c.type = 'EXPENSE'
+        AND t.transaction_date BETWEEN :startDate AND :endDate
+    """)
+    suspend fun calculateSpentAmountForBudget(
+        userId: UUID,
+        categoryId: UUID?,
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): BigDecimal
 } 
