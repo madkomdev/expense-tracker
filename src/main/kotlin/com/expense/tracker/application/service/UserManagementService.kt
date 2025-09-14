@@ -5,6 +5,7 @@ import com.expense.tracker.application.adapter.incoming.rest.model.UserProfile
 import com.expense.tracker.application.adapter.outgoing.db.UserRepository
 import com.expense.tracker.application.service.mappers.toDBUser
 import com.expense.tracker.application.service.mappers.toUserProfile
+import com.expense.tracker.domain.db.UserRole
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 
@@ -15,6 +16,11 @@ class UserManagementService(
 ) {
 
     suspend fun createUser(user: User): UserProfile {
+        // Validate role
+        if (!UserRole.isValid(user.role)) {
+            throw IllegalArgumentException("Invalid user role: ${user.role}. Must be one of: ${UserRole.ALL_ROLES}")
+        }
+        
         val hashedPassword = user.password?.let { passwordService.hashPassword(it) }
         val newUser = user.toDBUser(hashedPassword)
         val savedUser = userRepository.save(newUser)

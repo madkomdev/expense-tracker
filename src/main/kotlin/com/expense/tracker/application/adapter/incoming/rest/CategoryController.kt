@@ -4,14 +4,17 @@ import com.expense.tracker.application.adapter.incoming.rest.model.Category
 import com.expense.tracker.application.adapter.incoming.rest.model.CategoryResponse
 import com.expense.tracker.application.adapter.incoming.rest.model.CategoryUpdateRequest
 import com.expense.tracker.application.service.CategoryService
+import com.expense.tracker.application.service.UserAccessService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/categories")
 class CategoryController(
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val userAccessService: UserAccessService
 ) {
 
     @GetMapping
@@ -47,6 +50,7 @@ class CategoryController(
     }
 
     @PostMapping
+    @PreAuthorize("@userAccessService.hasAdminRole(authentication)")
     suspend fun createCategory(@RequestBody category: Category): ResponseEntity<CategoryResponse> {
         return try {
             val createdCategory = categoryService.createCategory(category)
@@ -57,6 +61,7 @@ class CategoryController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@userAccessService.hasAdminRole(authentication)")
     suspend fun updateCategory(
         @PathVariable id: String,
         @RequestBody updateRequest: CategoryUpdateRequest
@@ -74,6 +79,7 @@ class CategoryController(
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@userAccessService.hasAdminRole(authentication)")
     suspend fun deleteCategory(@PathVariable id: String): ResponseEntity<String> {
         val deleted = categoryService.deleteCategory(id)
         return if (deleted) {

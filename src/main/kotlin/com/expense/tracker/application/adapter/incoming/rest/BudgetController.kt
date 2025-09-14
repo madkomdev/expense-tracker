@@ -2,18 +2,22 @@ package com.expense.tracker.application.adapter.incoming.rest
 
 import com.expense.tracker.application.adapter.incoming.rest.model.*
 import com.expense.tracker.application.service.BudgetService
+import com.expense.tracker.application.service.UserAccessService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
 @RestController
 @RequestMapping("/api/users/{userId}/budgets")
 class BudgetController(
-    private val budgetService: BudgetService
+    private val budgetService: BudgetService,
+    private val userAccessService: UserAccessService
 ) {
 
     @PostMapping
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun createBudget(
         @PathVariable userId: String,
         @RequestBody budget: Budget
@@ -31,6 +35,7 @@ class BudgetController(
     }
 
     @GetMapping
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun getUserBudgets(
         @PathVariable userId: String
     ): ResponseEntity<List<BudgetResponse>> {
@@ -40,6 +45,7 @@ class BudgetController(
     }
 
     @GetMapping("/{budgetId}")
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun getBudgetById(
         @PathVariable userId: String,
         @PathVariable budgetId: String
@@ -58,6 +64,7 @@ class BudgetController(
     }
 
     @PutMapping("/{budgetId}")
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun updateBudget(
         @PathVariable userId: String,
         @PathVariable budgetId: String,
@@ -79,6 +86,7 @@ class BudgetController(
     }
 
     @DeleteMapping("/{budgetId}")
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun deleteBudget(
         @PathVariable userId: String,
         @PathVariable budgetId: String
@@ -93,6 +101,7 @@ class BudgetController(
     }
 
     @GetMapping("/summary")
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun getBudgetSummary(
         @PathVariable userId: String
     ): ResponseEntity<BudgetSummary> {
@@ -102,6 +111,7 @@ class BudgetController(
     }
 
     @GetMapping("/category/{categoryId}")
+    @PreAuthorize("@userAccessService.canAccessUserData(#userId, authentication)")
     suspend fun getBudgetsByCategory(
         @PathVariable userId: String,
         @PathVariable categoryId: String

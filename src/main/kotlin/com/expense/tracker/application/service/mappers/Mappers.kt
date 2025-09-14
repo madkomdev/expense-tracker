@@ -27,7 +27,8 @@ fun User.toDBUser(hashedPassword: String? = null) = DBUser(
     phone = this.phone,
     address = this.address,
     username = this.username,
-    passwordHash = hashedPassword
+    passwordHash = hashedPassword,
+    role = this.role
 )
 
 fun DBUser.toUser() = User(
@@ -37,7 +38,8 @@ fun DBUser.toUser() = User(
     phone = this.phone,
     address = this.address,
     username = this.username,
-    password = null // Never return password in User model
+    password = null, // Never return password in User model
+    role = this.role
 )
 
 fun DBUser.toUserProfile() = UserProfile(
@@ -45,7 +47,9 @@ fun DBUser.toUserProfile() = UserProfile(
     name = "${this.firstName} ${this.lastName}",
     email = this.email,
     phone = this.phone,
-    address = this.address
+    address = this.address,
+    username = this.username,
+    role = this.role
 )
 
 fun UserProfile.toUser() = User(
@@ -54,8 +58,9 @@ fun UserProfile.toUser() = User(
     email = this.email,
     phone = this.phone,
     address = this.address,
-    username = null,
-    password = null
+    username = this.username,
+    password = null,
+    role = this.role
 )
 
 fun UserProfile.toDBUser(existingUser: DBUser) = existingUser.copy(

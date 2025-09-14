@@ -18,33 +18,33 @@ services:
     networks:
       - expense-network
 
-  expense-tracker:
-    image: expense-tracker:1.0-SNAPSHOT
-    container_name: expense-tracker-app
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/expense_tracker
-      SPRING_R2DBC_USERNAME: user
-      SPRING_R2DBC_PASSWORD: password
-      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/expense_tracker
-      SPRING_FLYWAY_USER: user
-      SPRING_FLYWAY_PASSWORD: password
-      LOGGING_LEVEL_COM_EXPENSE: INFO
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - expense-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9001/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+#  expense-tracker:
+#    image: expense-tracker:1.0-SNAPSHOT
+#    container_name: expense-tracker-app
+#    restart: unless-stopped
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    environment:
+#      SPRING_PROFILES_ACTIVE: local
+#      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/expense_tracker
+#      SPRING_R2DBC_USERNAME: user
+#      SPRING_R2DBC_PASSWORD: password
+#      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/expense_tracker
+#      SPRING_FLYWAY_USER: user
+#      SPRING_FLYWAY_PASSWORD: password
+#      LOGGING_LEVEL_COM_EXPENSE: INFO
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    networks:
+#      - expense-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9001/actuator/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 60s
 
 volumes:
   postgres_data:
