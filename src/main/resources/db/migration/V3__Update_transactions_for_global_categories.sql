@@ -38,5 +38,3 @@ SELECT
 FROM transactions t
 JOIN categories c ON t.category_id = c.id
 GROUP BY t.user_id, t.category_id, c.name, c.color, c.icon, t.type;
-
--- Cast functions removed - no longer needed since we use strings instead of enums

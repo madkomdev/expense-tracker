@@ -12,8 +12,6 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== JWT Key Generation Script ===${NC}"
-echo -e "${YELLOW}This script generates RSA key pairs for JWT signing in production${NC}"
 echo ""
 
 # Create keys directory if it doesn't exist
@@ -60,34 +58,6 @@ JWT_EXPIRATION=900
 EOF
 
 echo -e "${GREEN}Environment file created: ${ENV_FILE}${NC}"
-echo ""
-
-# Display the environment variables
-echo -e "${BLUE}Environment Variables:${NC}"
-echo "======================================================"
-cat "$ENV_FILE"
-echo "======================================================"
-echo ""
-
-# Create docker-compose environment file
-DOCKER_ENV_FILE="$KEYS_DIR/.env.docker"
-cat > "$DOCKER_ENV_FILE" << EOF
-# Docker Compose Environment Variables
-# Generated on $(date)
-JWT_PRIVATE_KEY=$PRIVATE_KEY_BASE64
-JWT_PUBLIC_KEY=$PUBLIC_KEY_BASE64
-JWT_KEY_ID=$KEY_ID
-JWT_ISSUER=expense-tracker-production
-JWT_EXPIRATION=900
-
-# Database Configuration (update these values)
-DATABASE_URL=r2dbc:postgresql://postgres:5432/expense_tracker
-DATABASE_USERNAME=expense_user
-DATABASE_PASSWORD=CHANGE_ME_IN_PRODUCTION
-FLYWAY_URL=jdbc:postgresql://postgres:5432/expense_tracker
-EOF
-
-echo -e "${GREEN}Docker environment file created: ${DOCKER_ENV_FILE}${NC}"
 echo ""
 
 # Security reminders

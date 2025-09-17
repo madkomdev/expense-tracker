@@ -57,7 +57,7 @@ class UserManagementController(
             
             val loginResponse = JwtService.LoginResponse(
                 token = token,
-                expiresIn = 3600, // 1 hour
+                expiresIn = 3600L, // 1 hour
                 user = JwtService.UserInfo(
                     id = userProfile.id,
                     username = userProfile.username ?: userProfile.email,
