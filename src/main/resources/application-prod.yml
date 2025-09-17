@@ -1,0 +1,50 @@
+spring:
+  profiles:
+    active: prod
+
+# Production Database Configuration
+DATABASE_URL: ${DATABASE_URL}
+DATABASE_USERNAME: ${DATABASE_USERNAME}
+DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+FLYWAY_URL: ${FLYWAY_URL}
+
+# Production JWT Configuration
+# These MUST be set via environment variables in production
+JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+JWT_KEY_ID: ${JWT_KEY_ID:expense-tracker-prod-v1}
+JWT_ISSUER: ${JWT_ISSUER:expense-tracker-production}
+JWT_EXPIRATION: ${JWT_EXPIRATION:900}  # 15 minutes for production
+
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+# Production logging configuration
+logging:
+  level:
+    com.expense.tracker: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.springframework.boot.actuator: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Enhanced actuator security for production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true

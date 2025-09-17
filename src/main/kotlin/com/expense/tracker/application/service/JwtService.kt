@@ -3,15 +3,12 @@ package com.expense.tracker.application.service
 import com.nimbusds.jose.*
 import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.crypto.RSASSAVerifier
-import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Instant
@@ -19,29 +16,16 @@ import java.util.*
 
 @Service
 class JwtService(
+    private val jwtKeyManager: JwtKeyManager,
     @Value("\${app.jwt.expiration:3600}") private val jwtExpirationSeconds: Long = 3600,
     @Value("\${app.jwt.issuer:expense-tracker}") private val issuer: String = "expense-tracker"
 ) {
     
     private val logger = KotlinLogging.logger {}
-    private val keyPair: KeyPair
-    private val rsaPublicKey: RSAPublicKey
-    private val rsaPrivateKey: RSAPrivateKey
-    private val signer: JWSSigner
-    private val verifier: JWSVerifier
-
-    init {
-        // Generate RSA key pair for JWT signing
-        val keyGenerator = KeyPairGenerator.getInstance("RSA")
-        keyGenerator.initialize(2048)
-        keyPair = keyGenerator.generateKeyPair()
-        
-        rsaPublicKey = keyPair.public as RSAPublicKey
-        rsaPrivateKey = keyPair.private as RSAPrivateKey
-        
-        signer = RSASSASigner(rsaPrivateKey)
-        verifier = RSASSAVerifier(rsaPublicKey)
-    }
+    private val rsaPublicKey: RSAPublicKey by lazy { jwtKeyManager.rsaPublicKey }
+    private val rsaPrivateKey: RSAPrivateKey by lazy { jwtKeyManager.rsaPrivateKey }
+    private val signer: JWSSigner by lazy { RSASSASigner(rsaPrivateKey) }
+    private val verifier: JWSVerifier by lazy { RSASSAVerifier(rsaPublicKey) }
 
     /**
      * Generate JWT token for authenticated user
@@ -67,7 +51,7 @@ class JwtService(
 
         val signedJWT = SignedJWT(
             JWSHeader.Builder(JWSAlgorithm.RS256)
-                .keyID("expense-tracker-key")
+                .keyID(jwtKeyManager.getRSAKey().keyID)
                 .build(),
             claims
         )
@@ -133,11 +117,7 @@ class JwtService(
      * Get RSA public key for JWKS endpoint
      */
     fun getRSAPublicKey(): RSAKey {
-        return RSAKey.Builder(rsaPublicKey)
-            .keyUse(KeyUse.SIGNATURE)
-            .algorithm(JWSAlgorithm.RS256)
-            .keyID("expense-tracker-key")
-            .build()
+        return jwtKeyManager.getRSAPublicKey()
     }
 
     /**

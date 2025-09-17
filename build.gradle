@@ -63,6 +63,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core:9.22.3")
     implementation("org.postgresql:postgresql:42.7.0")
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.mockk:mockk:1.14.5'

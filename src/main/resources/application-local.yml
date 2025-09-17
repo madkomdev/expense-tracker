@@ -2,3 +2,11 @@ DATABASE_URL: r2dbc:postgresql://localhost:5432/expense_tracker
 DATABASE_USERNAME: user
 DATABASE_PASSWORD: password
 FLYWAY_URL: jdbc:postgresql://localhost:5432/expense_tracker
+
+# JWT Configuration for Local Development
+# Leave keys empty to use runtime-generated keys for development
+JWT_PRIVATE_KEY: 
+JWT_PUBLIC_KEY: 
+JWT_KEY_ID: expense-tracker-dev
+JWT_ISSUER: expense-tracker-local
+JWT_EXPIRATION: 3600

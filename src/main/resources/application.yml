@@ -20,8 +20,10 @@ spring:
     password: ${DATABASE_PASSWORD}
     baseline-on-migrate: true
     validate-on-migrate: true
+
 server:
   port: 9000
+
 management:
   server:
     port: 9001
@@ -51,6 +53,10 @@ app:
   jwt:
     expiration: ${JWT_EXPIRATION:3600}  # 1 hour in seconds
     issuer: ${JWT_ISSUER:expense-tracker}
+    private-key: ${JWT_PRIVATE_KEY:}  # Base64 encoded private key
+    public-key: ${JWT_PUBLIC_KEY:}    # Base64 encoded public key
+    key-id: ${JWT_KEY_ID:expense-tracker-key}  # Key identifier for rotation
+
 
 info:
   app:
