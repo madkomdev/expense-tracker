@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: expense-tracker-test
+  main:
+    web-application-type: reactive
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/.well-known/jwks.json
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 1
+      max-size: 2
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+server:
+  port: 0  # Random port for tests
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, metrics
+  statsd:
+    metrics:
+      export:
+        enabled: false
+
+# JWT Configuration for tests
+app:
+  jwt:
+    expiration: 3600
+    issuer: expense-tracker-test
+    private-key: ""
+    public-key: ""
+    key-id: expense-tracker-test-key
+
+logging:
+  level:
+    com.expense.tracker: DEBUG
+    org.testcontainers: INFO
