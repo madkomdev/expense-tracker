@@ -16,13 +16,16 @@ class UserManagementService(
 ) {
 
     suspend fun createUser(user: User): UserProfile {
-        // Validate role
-        if (!UserRole.isValid(user.role)) {
-            throw IllegalArgumentException("Invalid user role: ${user.role}. Must be one of: ${UserRole.ALL_ROLES}")
+        // Check for existing username or email
+        if (user.username != null && userRepository.existsByUsername(user.username)) {
+            throw IllegalArgumentException("Username '${user.username}' already exists")
+        }
+        if (userRepository.existsByEmail(user.email)) {
+            throw IllegalArgumentException("Email '${user.email}' already exists")
         }
         
         val hashedPassword = user.password?.let { passwordService.hashPassword(it) }
-        val newUser = user.toDBUser(hashedPassword)
+        val newUser = user.toDBUser(hashedPassword, UserRole.USER)
         val savedUser = userRepository.save(newUser)
         return savedUser.toUserProfile()
     }
@@ -63,9 +66,10 @@ class UserManagementService(
     }
 
     suspend fun authenticateUser(username: String, password: String): UserProfile? {
-        val user = userRepository.findByUsername(username) ?: return null
+        val user = userRepository.findByUsername(username) 
+            ?: userRepository.findByEmail(username) // Allow login with email
         
-        return if (user.passwordHash != null && passwordService.verifyPassword(password, user.passwordHash)) {
+        return if (user?.passwordHash != null && passwordService.verifyPassword(password, user.passwordHash)) {
             user.toUserProfile()
         } else {
             null
@@ -85,4 +89,37 @@ class UserManagementService(
         
         return true
     }
+
+    // Admin-only role management methods
+    suspend fun promoteUserToAdmin(adminUserId: String, targetUserId: String): UserProfile? {
+        // Verify admin requesting the promotion
+        val admin = userRepository.findById(adminUserId) 
+        if (admin?.role != UserRole.ADMIN) {
+            throw SecurityException("Only admins can promote users")
+        }
+        
+        val targetUser = userRepository.findById(targetUserId) ?: return null
+        val promotedUser = targetUser.copy(role = UserRole.ADMIN)
+        val savedUser = userRepository.save(promotedUser)
+        return savedUser.toUserProfile()
+    }
+
+    suspend fun demoteUserFromAdmin(adminUserId: String, targetUserId: String): UserProfile? {
+        // Verify admin requesting the demotion
+        val admin = userRepository.findById(adminUserId)
+        if (admin?.role != UserRole.ADMIN) {
+            throw SecurityException("Only admins can demote users")
+        }
+        
+        // Prevent admin from demoting themselves
+        if (adminUserId == targetUserId) {
+            throw IllegalArgumentException("Admin cannot demote themselves")
+        }
+        
+        val targetUser = userRepository.findById(targetUserId) ?: return null
+        val demotedUser = targetUser.copy(role = UserRole.USER)
+        val savedUser = userRepository.save(demotedUser)
+        return savedUser.toUserProfile()
+    }
+
 }

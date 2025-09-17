@@ -9,7 +9,8 @@ fun DBUser.toUserProfile() = UserProfile(
     name = "${this.firstName} ${this.lastName}",
     email = this.email,
     phone = this.phone,
-    address = this.address
+    address = this.address,
+    role = this.role
 )
 
 fun User.toUserProfile(id: String) = UserProfile(
@@ -17,7 +18,8 @@ fun User.toUserProfile(id: String) = UserProfile(
     name = "${this.firstName} ${this.lastName}",
     email = this.email,
     phone = this.phone,
-    address = this.address
+    address = this.address,
+    role = "USER"
 )
 
 fun UserProfile.toUser() = User(

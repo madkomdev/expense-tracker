@@ -1,20 +1,24 @@
--- Add role column to users table for RBAC
-ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'USER' 
-    CHECK (role IN ('ADMIN', 'USER'));
+-- Add role column to users table for RBAC (only if it doesn't exist)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'USER';
 
--- Create index for better performance on role queries
-CREATE INDEX idx_users_role ON users(role);
+-- Add check constraint for valid roles (only if it doesn't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name = 'users' 
+        AND constraint_name = 'chk_user_role'
+        AND constraint_type = 'CHECK'
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT chk_user_role 
+            CHECK (role IN ('ADMIN', 'USER'));
+    END IF;
+END $$;
+
+-- Create index for better performance on role queries (only if it doesn't exist)
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- Update existing users to have USER role (already set as default)
 -- First user can be promoted to ADMIN manually if needed
 
--- Insert a default admin user for testing (password is 'admin123')
-INSERT INTO users (email, username, password_hash, first_name, last_name, role) 
-VALUES (
-    'admin@expense-tracker.com',
-    'admin',
-    '$2a$10$rZ8R.3m6.lOr.7VL7fQ4L.7KJ3qJ8YqO5j1mX9Y8qZNHJ8T7xQxO2', -- BCrypt hash of 'admin123'
-    'Admin',
-    'User',
-    'ADMIN'
-) ON CONFLICT (email) DO NOTHING;
+-- Admin user will be created in a later migration (V7__Create_Admin_User.sql)

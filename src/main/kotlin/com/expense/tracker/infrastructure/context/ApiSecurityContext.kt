@@ -2,15 +2,21 @@ package com.expense.tracker.infrastructure.context
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
+import org.springframework.core.convert.converter.Converter
+import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.config.web.server.invoke
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter
+import reactor.core.publisher.Mono
 
 @Configuration
 @EnableWebFluxSecurity
@@ -60,6 +66,8 @@ class ApiSecurityContext {
                 authorize("/api/transactions/**", hasAnyRole("ADMIN", "USER"))
                 
                 // Admin access to actuator endpoints
+                authorize("/actuator/health", permitAll)
+                authorize("/actuator/info", permitAll)
                 authorize("/actuator/**", hasRole("ADMIN"))
                 
                 // All other requests must be authenticated
@@ -68,7 +76,7 @@ class ApiSecurityContext {
 
             oauth2ResourceServer {
                 jwt { 
-                    // JWT will be validated against the JWKS endpoint
+                    jwtAuthenticationConverter = jwtAuthenticationConverter()
                 }
             }
         }
@@ -77,6 +85,20 @@ class ApiSecurityContext {
     @Bean
     fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
+    }
+
+    @Bean
+    fun jwtAuthenticationConverter(): Converter<Jwt, Mono<AbstractAuthenticationToken>> {
+        val jwtConverter = JwtAuthenticationConverter()
+        
+        // Extract authorities from the "authorities" claim in JWT
+        val authoritiesConverter = JwtGrantedAuthoritiesConverter()
+        authoritiesConverter.setAuthoritiesClaimName("authorities")
+        authoritiesConverter.setAuthorityPrefix("")
+        
+        jwtConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter)
+        
+        return ReactiveJwtAuthenticationConverterAdapter(jwtConverter)
     }
 }
 
